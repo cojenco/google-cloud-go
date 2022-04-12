@@ -196,9 +196,40 @@ func (c *grpcStorageClient) GetBucket(ctx context.Context, bucket string, conds 
 
 	return battrs, err
 }
+
 func (c *grpcStorageClient) UpdateBucket(ctx context.Context, uattrs *BucketAttrsToUpdate, conds *BucketConditions, opts ...storageOption) (*BucketAttrs, error) {
-	return nil, errMethodNotSupported
+	s := callSettings(c.settings, opts...)
+	b := uattrs.toProtoBucket()
+	req := &storagepb.UpdateBucketRequest{
+		Bucket: b,
+	}
+	if err := applyBucketCondsProto("grpcStorageClient.UpdateBucket", conds, req); err != nil {
+		return nil, err
+	}
+	if s.userProject != "" {
+		req.CommonRequestParams = &storagepb.CommonRequestParams{
+			UserProject: toProjectResource(s.userProject),
+		}
+	}
+	if uattrs.PredefinedACL != "" {
+		req.PredefinedAcl = uattrs.PredefinedACL
+	}
+	if uattrs.PredefinedDefaultObjectACL != "" {
+		req.PredefinedAcl = uattrs.PredefinedDefaultObjectACL
+	}
+
+	var battrs *BucketAttrs
+	err := run(ctx, func() error {
+		res, err := c.raw.UpdateBucket(ctx, req, s.gax...)
+
+		battrs = newBucketFromProto(res)
+
+		return err
+	}, s.retry, s.idempotent)
+
+	return battrs, err
 }
+
 func (c *grpcStorageClient) LockBucketRetentionPolicy(ctx context.Context, bucket string, conds *BucketConditions, opts ...storageOption) error {
 	return errMethodNotSupported
 }

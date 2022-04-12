@@ -115,6 +115,32 @@ func TestGetSetTestIamPolicyEmulated(t *testing.T) {
 	})
 }
 
+func TestUpdateBucketEmulated(t *testing.T) {
+	transportClientTest(t, func(t *testing.T, project, bucket string, client storageClient) {
+		attrs := &BucketAttrs{
+			Name: bucket,
+		}
+		// Create the bucket that will be retrieved.
+		_, err := client.CreateBucket(context.Background(), project, attrs)
+		if err != nil {
+			t.Fatalf("client.CreateBucket: %v", err)
+		}
+
+		newStorageClass := "COLDLINE"
+		want := &BucketAttrsToUpdate{
+			StorageClass: newStorageClass,
+		}
+		// UpdateBucket(ctx context.Context, bucket string, uattrs *BucketAttrsToUpdate, conds *BucketConditions, opts ...storageOption)
+		got, err := client.UpdateBucket(context.Background(), want, &BucketConditions{MetagenerationMatch: 1})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(got.StorageClass, want.StorageClass); diff != "" {
+			t.Errorf("got(-),want(+):\n%s", diff)
+		}
+	})
+}
+
 func initEmulatorClients() func() error {
 	noopCloser := func() error { return nil }
 	if !isEmulatorEnvironmentSet() {

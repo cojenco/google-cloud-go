@@ -945,6 +945,60 @@ func (b *BucketAttrs) toProtoBucket() *storagepb.Bucket {
 	}
 }
 
+func (b *BucketAttrsToUpdate) toProtoBucket() *storagepb.Bucket {
+	if b == nil {
+		return &storagepb.Bucket{}
+	}
+
+	var v *storagepb.Bucket_Versioning
+	if b.VersioningEnabled != nil {
+		v = &storagepb.Bucket_Versioning{Enabled: optional.ToBool(b.VersioningEnabled)}
+	}
+	var bb *storagepb.Bucket_Billing
+	if b.RequesterPays != nil {
+		bb = &storage.Bucket_Billing{RequesterPays: optional.ToBool(b.RequesterPays)}
+	}
+	var bktIAM *storagepb.Bucket_IamConfig
+	if b.UniformBucketLevelAccess.Enabled || b.BucketPolicyOnly.Enabled || b.PublicAccessPrevention != PublicAccessPreventionUnknown {
+		bktIAM = &storagepb.Bucket_IamConfig{}
+		if b.UniformBucketLevelAccess.Enabled || b.BucketPolicyOnly.Enabled {
+			bktIAM.UniformBucketLevelAccess = &storagepb.Bucket_IamConfig_UniformBucketLevelAccess{
+				Enabled: true,
+			}
+		}
+		if b.PublicAccessPrevention != PublicAccessPreventionUnknown {
+			bktIAM.PublicAccessPrevention = b.PublicAccessPrevention.String()
+		}
+	}
+	var bktACL []*storagepb.BucketAccessControl
+	if b.PredefinedACL != "" {
+		// Clear ACL or the call will fail.
+		bktACL = nil
+	}
+	var bktDefaultObjectACL []*storagepb.ObjectAccessControl
+	if b.PredefinedDefaultObjectACL != "" {
+		// Clear ACLs or the call will fail.
+		bktDefaultObjectACL = nil
+	}
+
+	return &storagepb.Bucket{
+		StorageClass:     b.StorageClass,
+		Acl:              bktACL,
+		DefaultObjectAcl: bktDefaultObjectACL,
+		DefaultEventBasedHold: optional.ToBool(b.DefaultEventBasedHold),
+		Versioning: v,
+		Billing:    bb,
+		Lifecycle:  toProtoLifecycle(*b.Lifecycle),
+		RetentionPolicy:  b.RetentionPolicy.toProtoRetentionPolicy(),
+		Cors:             toProtoCORS(b.CORS),
+		Encryption:       b.Encryption.toProtoBucketEncryption(),
+		Logging:          b.Logging.toProtoBucketLogging(),
+		Website:          b.Website.toProtoBucketWebsite(),
+		IamConfig:        bktIAM,
+		Rpo:              b.RPO.String(),
+	}
+}
+
 // CORS is the bucket's Cross-Origin Resource Sharing (CORS) configuration.
 type CORS struct {
 	// MaxAge is the value to return in the Access-Control-Max-Age
