@@ -406,7 +406,24 @@ func (c *grpcStorageClient) UpdateObject(ctx context.Context, bucket, object str
 // Default Object ACL methods.
 
 func (c *grpcStorageClient) DeleteDefaultObjectACL(ctx context.Context, bucket string, entity ACLEntity, opts ...storageOption) error {
-	return errMethodNotSupported
+	// Get the existing ACL from BucketAttrs
+	attrs, err := c.GetBucket(ctx, bucket, nil, opts...)
+	if err != nil {
+		return err
+	}
+	// Delete the entity and copy other remaining ACL entities.
+	var acl []ACLRule
+	for _, a := range attrs.DefaultObjectACL {
+		if a.Entity != entity {
+			acl = append(acl, a)
+		}
+	}
+	// Set ACL in BucketAttrsToUpdate
+	uattrs := &BucketAttrsToUpdate{defaultObjectACL: acl}
+	if _, err = c.UpdateBucket(ctx, bucket, uattrs, nil, opts...); err != nil {
+		return err
+	}
+	return nil
 }
 func (c *grpcStorageClient) ListDefaultObjectACLs(ctx context.Context, bucket string, opts ...storageOption) ([]ACLRule, error) {
 	attrs, err := c.GetBucket(ctx, bucket, nil, opts...)
@@ -422,8 +439,26 @@ func (c *grpcStorageClient) UpdateDefaultObjectACL(ctx context.Context, opts ...
 // Bucket ACL methods.
 
 func (c *grpcStorageClient) DeleteBucketACL(ctx context.Context, bucket string, entity ACLEntity, opts ...storageOption) error {
-	return errMethodNotSupported
+	// Get the existing ACL from BucketAttrs
+	attrs, err := c.GetBucket(ctx, bucket, nil, opts...)
+	if err != nil {
+		return err
+	}
+	// Delete the entity and copy other remaining ACL entities.
+	var acl []ACLRule
+	for _, a := range attrs.ACL {
+		if a.Entity != entity {
+			acl = append(acl, a)
+		}
+	}
+	// Set ACL in BucketAttrsToUpdate
+	uattrs := &BucketAttrsToUpdate{acl: acl}
+	if _, err = c.UpdateBucket(ctx, bucket, uattrs, nil, opts...); err != nil {
+		return err
+	}
+	return nil
 }
+
 func (c *grpcStorageClient) ListBucketACLs(ctx context.Context, bucket string, opts ...storageOption) ([]ACLRule, error) {
 	attrs, err := c.GetBucket(ctx, bucket, nil, opts...)
 	if err != nil {
