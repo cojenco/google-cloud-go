@@ -203,6 +203,16 @@ var methods = map[string][]retryFunc{
 			return err
 		},
 	},
+	"storage.objects.download": {
+		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
+			r, err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).NewReader(ctx)
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(ioutil.Discard, r)
+			return err
+		},
+	},
 	"storage.objects.list": {
 		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
 			it := c.Bucket(fs.bucket.Name).Objects(ctx, nil)
@@ -405,10 +415,14 @@ func TestRetryConformance(t *testing.T) {
 		for _, retryTest := range testFile.RetryTests {
 			for _, instructions := range retryTest.Cases {
 				for _, method := range retryTest.Methods {
-					if len(methods[method.Name]) == 0 {
+					methodName := methods[method.Name]
+					if len(methodName) == 0 {
 						t.Logf("No tests for operation %v", method.Name)
 					}
-					for i, fn := range methods[method.Name] {
+					if len(methods[method.Group]) != 0 {
+						methodName = methods[method.Group]
+					}
+					for i, fn := range methodName {
 						testName := fmt.Sprintf("%v-%v-%v-%v", retryTest.Id, instructions.Instructions, method.Name, i)
 						t.Run(testName, func(t *testing.T) {
 
