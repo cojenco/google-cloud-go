@@ -413,17 +413,21 @@ func TestRetryConformance(t *testing.T) {
 
 	for _, testFile := range testFiles {
 		for _, retryTest := range testFile.RetryTests {
+			// TODELETE: Skip previous scenarios for dev purposes
+			if retryTest.Id <= 6 {
+				continue
+			}
 			for _, instructions := range retryTest.Cases {
 				for _, method := range retryTest.Methods {
-					methodName := methods[method.Name]
-					if len(methodName) == 0 {
-						t.Logf("No tests for operation %v", method.Name)
+					methodName := method.Name
+					if method.Group != "" {
+						methodName = method.Group
 					}
-					if len(methods[method.Group]) != 0 {
-						methodName = methods[method.Group]
+					if len(methods[methodName]) == 0 {
+						t.Logf("No tests for operation %v", methodName)
 					}
-					for i, fn := range methodName {
-						testName := fmt.Sprintf("%v-%v-%v-%v", retryTest.Id, instructions.Instructions, method.Name, i)
+					for i, fn := range methods[methodName] {
+						testName := fmt.Sprintf("%v-%v-%v-%v", retryTest.Id, instructions.Instructions, methodName, i)
 						t.Run(testName, func(t *testing.T) {
 
 							// Create the retry subtest
