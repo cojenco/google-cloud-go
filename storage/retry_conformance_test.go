@@ -17,6 +17,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,6 +44,7 @@ var (
 	projectID           = "my-project-id"
 	serviceAccountEmail = "my-sevice-account@my-project-id.iam.gserviceaccount.com"
 	randomBytesToWrite  = []byte("abcdef")
+	size9MB             = 9437184 // 9*1024 KiB
 )
 
 type retryFunc func(ctx context.Context, c *Client, fs *resources, preconditions bool) error
@@ -498,7 +500,11 @@ func (et *emulatorTest) populateResources(ctx context.Context, c *Client, resour
 			// Assumes bucket has been populated first.
 			obj := c.Bucket(et.resources.bucket.Name).Object(objectIDs.New())
 			w := obj.NewWriter(ctx)
-			if _, err := w.Write(randomBytesToWrite); err != nil {
+			randomBytes, err := generateRandomBytes(size9MB)
+			if err != nil {
+				et.Fatalf("generate random bytes: %v", err)
+			}
+			if _, err := w.Write(randomBytes); err != nil {
 				et.Fatalf("writing object: %v", err)
 			}
 			if err := w.Close(); err != nil {
@@ -509,6 +515,8 @@ func (et *emulatorTest) populateResources(ctx context.Context, c *Client, resour
 				et.Fatalf("getting object attrs: %v", err)
 			}
 			et.resources.object = attrs
+			fmt.Println("!!!!!!!")
+			fmt.Println(attrs.Size)
 		case storage_v1_tests.Resource_NOTIFICATION:
 			// Assumes bucket has been populated first.
 			n, err := c.Bucket(et.resources.bucket.Name).AddNotification(ctx, &Notification{
@@ -528,6 +536,16 @@ func (et *emulatorTest) populateResources(ctx context.Context, c *Client, resour
 			et.resources.hmacKey = key
 		}
 	}
+}
+
+// Generates size random bytes.
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 // Creates a retry test resource in the emulator

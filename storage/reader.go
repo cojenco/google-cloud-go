@@ -186,6 +186,11 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 					start > 0 && length != 0 &&
 					res.StatusCode != http.StatusPartialContent
 
+			fmt.Println("***")
+			fmt.Println(start)
+			fmt.Println(length)
+			fmt.Println(seen)
+			fmt.Println(res.StatusCode)
 			if partialContentNotSatisfied {
 				res.Body.Close()
 				return errors.New("storage: partial request not satisfied")
