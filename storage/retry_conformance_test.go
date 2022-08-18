@@ -440,7 +440,7 @@ func TestRetryConformance(t *testing.T) {
 	for _, testFile := range testFiles {
 		for _, retryTest := range testFile.RetryTests {
 			// TODELETE: Skip previous scenarios for dev purposes.
-			if retryTest.Id <= 6 {
+			if retryTest.Id <= 8 && retryTest.Id != 2 {
 				continue
 			}
 			for _, instructions := range retryTest.Cases {
