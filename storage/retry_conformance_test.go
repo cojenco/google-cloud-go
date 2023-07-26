@@ -197,39 +197,6 @@ var methods = map[string][]retryFunc{
 			_, err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).Attrs(ctx)
 			return err
 		},
-		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
-			r, err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).NewReader(ctx)
-			if err != nil {
-				return err
-			}
-			wr, err := io.Copy(ioutil.Discard, r)
-			if got, want := wr, len(randomBytesToWrite); got != int64(want) {
-				return fmt.Errorf("body length mismatch\ngot:\n%v\n\nwant:\n%v", got, want)
-			}
-			return err
-		},
-		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
-			// Test JSON reads.
-			client, ok := c.tc.(*httpStorageClient)
-			if ok {
-				client.config.readAPIWasSet = true
-				client.config.useJSONforReads = true
-				defer func() {
-					client.config.readAPIWasSet = false
-					client.config.useJSONforReads = false
-				}()
-			}
-
-			r, err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).NewReader(ctx)
-			if err != nil {
-				return err
-			}
-			wr, err := io.Copy(ioutil.Discard, r)
-			if got, want := wr, len(randomBytesToWrite); got != int64(want) {
-				return fmt.Errorf("body length mismatch\ngot:\n%v\n\nwant:\n%v", got, want)
-			}
-			return err
-		},
 	},
 	"storage.objects.download": {
 		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
