@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"cloud.google.com/go/internal/uid"
@@ -193,7 +194,15 @@ var methods = map[string][]retryFunc{
 		},
 	},
 	"storage.objects.get": {
-		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
+		func(ctx context.Context, _ *Client, fs *resources, _ bool) error {
+			// mutex on starting a client so that we can set an env variable for GRPC clients
+			opts := defaultGRPCOptions()
+			var clientMu sync.Mutex
+			clientMu.Lock()
+			os.Setenv("STORAGE_USE_GRPC", "true")
+			c, _ := NewClient(ctx, opts...)
+			os.Unsetenv("STORAGE_USE_GRPC")
+			clientMu.Unlock()
 			_, err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).Attrs(ctx)
 			return err
 		},
@@ -650,6 +659,8 @@ func (et *emulatorTest) create(instructions map[string][]string) {
 	}
 
 	et.id = testRes.TestID
+	fmt.Println("!!!!!!!!!!!!!!!!!!!!!")
+	fmt.Println(et.id)
 
 	// Create wrapped client which will send emulator instructions
 	et.host.Path = ""
@@ -741,5 +752,15 @@ func wrappedClient(t *testing.T, testID string) (*Client, error) {
 	// Supply this client to storage.NewClient
 	// STORAGE_EMULATOR_HOST takes care of setting the correct endpoint
 	client, err := NewClient(ctx, option.WithHTTPClient(&c))
+	// client, err := newGRPCClient(ctx, option.WithHTTPClient(&c))
+	// // mutex on starting a client so that we can set an env variable for GRPC clients
+	// opts := defaultGRPCOptions()
+	// var clientMu sync.Mutex
+	// clientMu.Lock()
+	// os.Setenv("STORAGE_USE_GRPC", "true")
+	// client, err := storage.NewClient(ctx, opts...)
+	// os.Unsetenv("STORAGE_USE_GRPC")
+	// clientMu.Unlock()
+
 	return client, err
 }
