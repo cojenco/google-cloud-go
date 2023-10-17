@@ -533,23 +533,11 @@ func TestRetryConformance(t *testing.T) {
 								// Create necessary test resources in the emulator
 								subtest.populateResources(ctx, client, method.Resources)
 
-								// Create transportClient
-								ctx := context.Background()
-								// This line is per method call, can be moved down??
-								ctx = callctx.SetHeaders(ctx, "x-retry-test-id", subtest.id)
-								transportClient, err := NewClient(ctx)
-								if err != nil {
-									t.Fatalf("HTTP transportClient: %v", err)
-								}
-								if transport == "grpc" {
-									transportClient, err = NewGRPCClient(ctx)
-									if err != nil {
-										t.Fatalf("GRPC transportClient: %v", err)
-									}
-								}
-
 								// Test
-								err = fn(ctx, transportClient, &subtest.resources, retryTest.PreconditionProvided)
+								// Set retry test id through headers
+								ctx := context.Background()
+								ctx = callctx.SetHeaders(ctx, "x-retry-test-id", subtest.id)
+								err = fn(ctx, subtest.transportClient, &subtest.resources, retryTest.PreconditionProvided)
 								if retryTest.ExpectSuccess && err != nil {
 									t.Errorf("want success, got %v", err)
 								}
@@ -574,10 +562,11 @@ func TestRetryConformance(t *testing.T) {
 
 type emulatorTest struct {
 	*testing.T
-	name      string
-	id        string // ID to pass as a header in the test execution
-	resources resources
-	host      *url.URL // set the path when using; path is not guaranteed between calls
+	name            string
+	id              string // ID to pass as a header in the test execution
+	resources       resources
+	host            *url.URL // set the path when using; path is not guaranteed between calls
+	transportClient *Client
 }
 
 // Holds the resources for a particular test case. Only the necessary fields will
@@ -704,6 +693,20 @@ func (et *emulatorTest) create(instructions map[string][]string, transport strin
 
 	et.id = testRes.TestID
 
+	// Create transportClient for http or grpc
+	et.host.Path = ""
+	ctx := context.Background()
+	transportClient, err := NewClient(ctx)
+	if err != nil {
+		et.Fatalf("HTTP transportClient: %v", err)
+	}
+	if transport == "grpc" {
+		transportClient, err = NewGRPCClient(ctx)
+		if err != nil {
+			et.Fatalf("GRPC transportClient: %v", err)
+		}
+	}
+	et.transportClient = transportClient
 }
 
 // Verifies that all instructions for a given retry testID have been used up
