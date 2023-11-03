@@ -1356,7 +1356,12 @@ func (c *grpcStorageClient) DeleteNotification(ctx context.Context, bucket strin
 	defer func() { trace.EndSpan(ctx, err) }()
 
 	s := callSettings(c.settings, opts...)
-	req := &storagepb.DeleteNotificationConfigRequest{Name: id}
+	name := id
+	if checkNotificationConfigName(id) == "" {
+		parent := bucketResourceName(globalProjectAlias, bucket)
+		name = fmt.Sprintf("%s/notificationConfigs/%s", parent, id)
+	}
+	req := &storagepb.DeleteNotificationConfigRequest{Name: name}
 	return run(ctx, func(ctx context.Context) error {
 		return c.raw.DeleteNotificationConfig(ctx, req, s.gax...)
 	}, s.retry, s.idempotent)
