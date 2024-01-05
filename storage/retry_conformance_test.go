@@ -98,7 +98,9 @@ var methods = map[string][]retryFunc{
 	},
 	"storage.buckets.get": {
 		func(ctx context.Context, c *Client, fs *resources, _ bool) error {
-			_, err := c.Bucket(fs.bucket.Name).Attrs(ctx)
+			b := c.Bucket(fs.bucket.Name).Retryer(WithPolicy(RetryNever))
+			_, err := b.Attrs(ctx)
+			// _, err := c.Bucket(fs.bucket.Name).Attrs(ctx)
 			return err
 		},
 	},
@@ -325,7 +327,8 @@ var methods = map[string][]retryFunc{
 	},
 	"storage.buckets.setIamPolicy": {
 		func(ctx context.Context, c *Client, fs *resources, preconditions bool) error {
-			bkt := c.Bucket(fs.bucket.Name)
+			bkt := c.Bucket(fs.bucket.Name).Retryer(WithPolicy(RetryAlways))
+			// bkt := c.Bucket(fs.bucket.Name)
 			policy, err := bkt.IAM().Policy(ctx)
 			if err != nil {
 				return err

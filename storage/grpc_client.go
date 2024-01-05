@@ -265,9 +265,11 @@ func (c *grpcStorageClient) GetBucket(ctx context.Context, bucket string, conds 
 	}
 
 	var battrs *BucketAttrs
+	fmt.Println("###grpcStorageClient.GetBucket###")
 	err := run(ctx, func(ctx context.Context) error {
+		fmt.Println("L270 c.raw.GetBucket")
 		res, err := c.raw.GetBucket(ctx, req, s.gax...)
-
+		fmt.Printf("Error is %v", err)
 		battrs = newBucketFromProto(res)
 
 		return err
@@ -276,7 +278,7 @@ func (c *grpcStorageClient) GetBucket(ctx context.Context, bucket string, conds 
 	if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 		return nil, ErrBucketNotExist
 	}
-
+	fmt.Println("END ###grpcStorageClient.GetBucket###")
 	return battrs, err
 }
 func (c *grpcStorageClient) UpdateBucket(ctx context.Context, bucket string, uattrs *BucketAttrsToUpdate, conds *BucketConditions, opts ...storageOption) (*BucketAttrs, error) {
@@ -1127,7 +1129,9 @@ func (c *grpcStorageClient) SetIamPolicy(ctx context.Context, resource string, p
 		Resource: bucketResourceName(globalProjectAlias, resource),
 		Policy:   policy,
 	}
-
+	fmt.Println("#### grpcStorageClient.SetIamPolicy @@@@@")
+	fmt.Println("s.idempotent")
+	fmt.Println(s.idempotent)
 	return run(ctx, func(ctx context.Context) error {
 		_, err := c.raw.SetIamPolicy(ctx, req, s.gax...)
 		return err

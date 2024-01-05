@@ -1012,7 +1012,10 @@ func (c *gRPCClient) GetBucket(ctx context.Context, req *storagepb.GetBucketRequ
 	var resp *storagepb.Bucket
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
+		fmt.Println("L1015 gapic GetBucket")
+		fmt.Printf("settings.REtry is %v\n", settings.Retry)
 		resp, err = c.client.GetBucket(ctx, req, settings.GRPC...)
+		fmt.Printf("L1017 gapic error %v\n", err)
 		return err
 	}, opts...)
 	if err != nil {

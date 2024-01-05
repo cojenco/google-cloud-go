@@ -49,10 +49,22 @@ func run(ctx context.Context, call func(ctx context.Context) error, retry *retry
 	attempts := 1
 	invocationID := uuid.New().String()
 
+	fmt.Println("!!!!!!!!")
+	fmt.Println("attempts")
+	fmt.Println(attempts)
+	fmt.Println("retry == nil")
+	fmt.Println(retry == nil)
 	if retry == nil {
 		retry = defaultRetry
 	}
+	fmt.Println("retry.policy == RetryIdempotent")
+	fmt.Println(retry.policy == RetryIdempotent)
+	fmt.Println("retry.policy == RetryNever")
+	fmt.Println(retry.policy == RetryNever)
+	fmt.Println("!isIdempotent")
+	fmt.Println(!isIdempotent)
 	if (retry.policy == RetryIdempotent && !isIdempotent) || retry.policy == RetryNever {
+		fmt.Println("###L67 did we come here")
 		ctxWithHeaders := setInvocationHeaders(ctx, invocationID, attempts)
 		return call(ctxWithHeaders)
 	}
@@ -63,10 +75,11 @@ func run(ctx context.Context, call func(ctx context.Context) error, retry *retry
 		bo.Max = retry.backoff.Max
 	}
 	var errorFunc func(err error) bool = ShouldRetry
+	fmt.Println("retry.shouldRetry != nil")
+	fmt.Println(retry.shouldRetry != nil)
 	if retry.shouldRetry != nil {
 		errorFunc = retry.shouldRetry
 	}
-
 	return internal.Retry(ctx, bo, func() (stop bool, err error) {
 		ctxWithHeaders := setInvocationHeaders(ctx, invocationID, attempts)
 		err = call(ctxWithHeaders)

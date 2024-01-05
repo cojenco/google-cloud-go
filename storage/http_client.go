@@ -264,6 +264,7 @@ func (c *httpStorageClient) GetBucket(ctx context.Context, bucket string, conds 
 	}
 
 	var resp *raw.Bucket
+	fmt.Println("@@@ httpStorageClient.GetBucket @@@")
 	err = run(ctx, func(ctx context.Context) error {
 		resp, err = req.Context(ctx).Do()
 		return err
@@ -276,6 +277,7 @@ func (c *httpStorageClient) GetBucket(ctx context.Context, bucket string, conds 
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("END @@@ httpStorageClient.GetBucket @@@")
 	return newBucket(resp)
 }
 func (c *httpStorageClient) UpdateBucket(ctx context.Context, bucket string, uattrs *BucketAttrsToUpdate, conds *BucketConditions, opts ...storageOption) (*BucketAttrs, error) {
@@ -974,6 +976,9 @@ func (c *httpStorageClient) SetIamPolicy(ctx context.Context, resource string, p
 		call.UserProject(s.userProject)
 	}
 
+	fmt.Println("#### httpStorageClient.SetIamPolicy @@@@@")
+	fmt.Println("s.idempotent")
+	fmt.Println(s.idempotent)
 	return run(ctx, func(ctx context.Context) error {
 		_, err := call.Context(ctx).Do()
 		return err
