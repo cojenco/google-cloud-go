@@ -907,7 +907,9 @@ func TestIntegration_Autoclass(t *testing.T) {
 		}
 
 		// Update TerminalStorageClass on the bucket.
-		ua := BucketAttrsToUpdate{Autoclass: &Autoclass{Enabled: true, TerminalStorageClass: "ARCHIVE"}}
+		// ua := BucketAttrsToUpdate{Autoclass: &Autoclass{Enabled: true, TerminalStorageClass: "ARCHIVE"}}
+		ua := BucketAttrsToUpdate{Autoclass: &Autoclass{TerminalStorageClass: "ARCHIVE"}}
+		fmt.Println(ua.Autoclass)
 		attrs = h.mustUpdateBucket(bkt, ua, attrs.MetaGeneration)
 		if got, want := attrs.Autoclass.Enabled, true; got != want {
 			t.Errorf("attr.Autoclass.Enabled = %v, want %v", got, want)

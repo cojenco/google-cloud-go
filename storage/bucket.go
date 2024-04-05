@@ -1269,7 +1269,10 @@ func (ua *BucketAttrsToUpdate) toRawBucket() *raw.Bucket {
 		rb.Autoclass = &raw.BucketAutoclass{
 			Enabled:              ua.Autoclass.Enabled,
 			TerminalStorageClass: ua.Autoclass.TerminalStorageClass,
-			ForceSendFields:      []string{"Enabled"},
+			// ForceSendFields:      []string{"Enabled"},
+		}
+		if ua.Autoclass.Enabled || !ua.Autoclass.Enabled {
+			rb.Autoclass.ForceSendFields = []string{"Enabled"}
 		}
 		rb.ForceSendFields = append(rb.ForceSendFields, "Autoclass")
 	}
