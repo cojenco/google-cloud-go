@@ -25,6 +25,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/internal/trace"
+
+	// "go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	ottrace "go.opentelemetry.io/otel/trace"
 )
 
 var crc32cTable = crc32.MakeTable(crc32.Castagnoli)
@@ -115,7 +119,29 @@ func (o *ObjectHandle) NewReader(ctx context.Context) (*Reader, error) {
 func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64) (r *Reader, err error) {
 	// This span covers the life of the reader. It is closed via the context
 	// in Reader.Close.
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
+	// fmt.Println("!!! greetings from NewRangeReader: Hello world!")
+	// commonAttributes := []attribute.KeyValue{
+	// 	attribute.String("ssb.language", "go"),
+	// 	attribute.Int64("ssb.object-size", 888),
+	// 	attribute.String("foo", "bar"),
+	// 	attribute.String("ssb.deployment", config.deployment),
+	// 	attribute.String("ssb.instance", config.instance),
+	// }
+	commonAttributes := []attribute.KeyValue{
+		attribute.Int64("ssb.new-object-size", 888),
+		attribute.String("foo", "bar"),
+		attribute.String("ping", "pong"),
+	}
+	// fmt.Println("commonAttributes")
+	// fmt.Println(commonAttributes)
+	// 	fmt.Println("!!!!!!!!!!! inject attributes!!!")
+	// 	fmt.Println("IsOpenTelemetryTracingEnabled")
+	// 	fmt.Println(IsOpenTelemetryTracingEnabled())
+	// 	if IsOpenTelemetryTracingEnabled() {
+	// 		ctx, _ = otel.GetTracerProvider().Tracer(OpenTelemetryTracerName).Start(ctx, name, ottrace.WithAttributes(commonAttributes...))
+	// ctx, _ = otel.GetTracerProvider().Tracer("cloud.google.com/go").Start(ctx, "cloud.google.com/go/storage.Object.Reader", ottrace.WithAttributes(commonAttributes...))
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Reader", ottrace.WithAttributes(append([]attribute.KeyValue{attribute.Int("bbb.iteration", 9)}, commonAttributes...)...))
+	trace.TracePrintf(ctx, annotationData(), "Add my annotations")
 
 	if err := o.validate(); err != nil {
 		return nil, err
@@ -153,6 +179,17 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 	}
 
 	return r, err
+}
+
+// TEMP // 
+func annotationData() map[string]interface{} {
+	attrMap := make(map[string]interface{})
+	attrMap["my_string"] = "my string"
+	attrMap["my_bool"] = true
+	attrMap["my_int"] = 123
+	attrMap["my_int64"] = int64(456)
+	attrMap["my_float"] = 0.9
+	return attrMap
 }
 
 // decompressiveTranscoding returns true if the request was served decompressed
