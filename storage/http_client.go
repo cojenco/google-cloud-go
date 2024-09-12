@@ -42,6 +42,9 @@ import (
 	raw "google.golang.org/api/storage/v1"
 	"google.golang.org/api/transport"
 	htransport "google.golang.org/api/transport/http"
+
+	"go.opentelemetry.io/otel/attribute"
+	ottrace "go.opentelemetry.io/otel/trace"
 )
 
 // httpStorageClient is the HTTP-JSON API implementation of the transport-agnostic
@@ -820,7 +823,17 @@ func (c *httpStorageClient) RewriteObject(ctx context.Context, req *rewriteObjec
 }
 
 func (c *httpStorageClient) NewRangeReader(ctx context.Context, params *newRangeReaderParams, opts ...storageOption) (r *Reader, err error) {
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.httpStorageClient.NewRangeReader")
+	fmt.Println("!!! httpStorageClient.NewRangeReader")
+	commonAttributes := []attribute.KeyValue{
+		attribute.String("gcp.client.service", "google.storage.v2.Storage"),
+		attribute.String("gcp.client.repo", "googleapis/google-cloud-go/storage"),
+		attribute.String("gcp.client.artifact", "com.google.cloud.google-cloud-storage"),
+		attribute.String("foo", "bar"),
+		attribute.String("ping", "pong"),
+		attribute.Int64("inject-some-id", 888),
+	}
+	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.httpStorageClient.NewRangeReader", ottrace.WithAttributes(commonAttributes...))
+	// ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.httpStorageClient.NewRangeReader")
 	defer func() { trace.EndSpan(ctx, err) }()
 
 	s := callSettings(c.settings, opts...)

@@ -108,9 +108,22 @@ func IsOpenTelemetryTracingEnabled() bool {
 //
 // The default experimental tracing support for OpenCensus is now deprecated in
 // the Google Cloud client libraries for Go.
-func StartSpan(ctx context.Context, name string) context.Context {
+// func StartSpan(ctx context.Context, name string) context.Context {
+// 	if IsOpenTelemetryTracingEnabled() {
+// 		ctx, _ = otel.GetTracerProvider().Tracer(OpenTelemetryTracerName).Start(ctx, name)
+// 	} else {
+// 		ctx, _ = trace.StartSpan(ctx, name)
+// 	}
+// 	return ctx
+// }
+
+func StartSpan(ctx context.Context, name string, opts ...ottrace.SpanStartOption) context.Context {
+	fmt.Println("IsOpenTelemetryTracingEnabled")
+	fmt.Println(IsOpenTelemetryTracingEnabled())
+	fmt.Println("opts")
+	fmt.Println(opts)
 	if IsOpenTelemetryTracingEnabled() {
-		ctx, _ = otel.GetTracerProvider().Tracer(OpenTelemetryTracerName).Start(ctx, name)
+		ctx, _ = otel.GetTracerProvider().Tracer(OpenTelemetryTracerName).Start(ctx, name, opts...)
 	} else {
 		ctx, _ = trace.StartSpan(ctx, name)
 	}
