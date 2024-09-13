@@ -820,8 +820,9 @@ func (c *httpStorageClient) RewriteObject(ctx context.Context, req *rewriteObjec
 }
 
 func (c *httpStorageClient) NewRangeReader(ctx context.Context, params *newRangeReaderParams, opts ...storageOption) (r *Reader, err error) {
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.httpStorageClient.NewRangeReader")
-	defer func() { trace.EndSpan(ctx, err) }()
+	traceOpts := getCommonTraceOptions()
+	ctx, _ = startSpan(ctx, "cloud.google.com/go/storage.httpStorageClient.NewRangeReader", traceOpts...)
+	defer func() { endSpan(ctx, err) }()
 
 	s := callSettings(c.settings, opts...)
 

@@ -1117,7 +1117,8 @@ func (o *ObjectHandle) Restore(ctx context.Context, opts *RestoreOptions) (*Obje
 // It is the caller's responsibility to call Close when writing is done. To
 // stop writing without saving the data, cancel the context.
 func (o *ObjectHandle) NewWriter(ctx context.Context) *Writer {
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Writer")
+	traceOpts := getCommonTraceOptions()
+	ctx, _ = startSpan(ctx, "cloud.google.com/go/storage.Object.Writer", traceOpts...)
 	return &Writer{
 		ctx:         ctx,
 		o:           o,

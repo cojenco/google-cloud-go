@@ -23,7 +23,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"cloud.google.com/go/internal/trace"
+	// "cloud.google.com/go/internal/trace"
 )
 
 // A Writer writes a Cloud Storage object.
@@ -170,7 +170,8 @@ func (w *Writer) Close() error {
 	<-w.donec
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	trace.EndSpan(w.ctx, w.err)
+	// trace.EndSpan(w.ctx, w.err)
+	endSpan(w.ctx, w.err)
 	return w.err
 }
 

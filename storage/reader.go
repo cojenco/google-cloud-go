@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"cloud.google.com/go/internal/trace"
+	// "cloud.google.com/go/internal/trace"
 )
 
 var crc32cTable = crc32.MakeTable(crc32.Castagnoli)
@@ -115,7 +115,8 @@ func (o *ObjectHandle) NewReader(ctx context.Context) (*Reader, error) {
 func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64) (r *Reader, err error) {
 	// This span covers the life of the reader. It is closed via the context
 	// in Reader.Close.
-	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
+	// ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
+	ctx, _ = startSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
 
 	if err := o.validate(); err != nil {
 		return nil, err
@@ -149,7 +150,8 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 	if err == nil {
 		r.ctx = ctx
 	} else {
-		trace.EndSpan(ctx, err)
+		// trace.EndSpan(ctx, err)
+		endSpan(ctx, err)
 	}
 
 	return r, err
@@ -233,7 +235,8 @@ type Reader struct {
 // Close closes the Reader. It must be called when done reading.
 func (r *Reader) Close() error {
 	err := r.reader.Close()
-	trace.EndSpan(r.ctx, err)
+	// trace.EndSpan(r.ctx, err)
+	endSpan(r.ctx, err)
 	return err
 }
 
