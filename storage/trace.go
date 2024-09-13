@@ -2,17 +2,11 @@ package storage
 
 import (
 	"context"
-	// "fmt"
-	// "log"
-	// "sync"
-
 
 	"cloud.google.com/go/storage/internal"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
-	// "go.opentelemetry.io/otel/propagation"
-	// semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -22,12 +16,14 @@ func tracer() trace.Tracer {
 	return otel.Tracer(defaultTracerName, trace.WithInstrumentationVersion(internal.Version))
 }
 
+// startSpan accepts SpanStartOption and is used to replace internal/trace/StartSpan.
 func startSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-	// Maybe do something 
+	// We can append commonTraceOptions here or preprocess additional info...
 	// return otel.GetTracerProvider().Tracer(defaultTracerName).Start(ctx, name, opts...)
 	return tracer().Start(ctx, name, opts...)
 }
 
+// endSpan is used to replace internal/trace/EndSpan.
 func endSpan(ctx context.Context, err error) {
 	span := trace.SpanFromContext(ctx)
 	if err != nil {
@@ -37,6 +33,8 @@ func endSpan(ctx context.Context, err error) {
 	span.End()
 }
 
+// getCommonTraceOptions() compiles the common span attributes we want to append.
+// Similar helper functions can be created for such operations as reads and writes.
 func getCommonTraceOptions() []trace.SpanStartOption {
 	opts := []trace.SpanStartOption{
 		trace.WithAttributes(
