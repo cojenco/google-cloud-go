@@ -116,7 +116,7 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 	// This span covers the life of the reader. It is closed via the context
 	// in Reader.Close.
 	// ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
-	ctx, _ = startSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
+	ctx = startSpan(ctx, "cloud.google.com/go/storage.Object.Reader")
 
 	if err := o.validate(); err != nil {
 		return nil, err

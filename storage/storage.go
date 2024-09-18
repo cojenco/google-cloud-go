@@ -1118,7 +1118,7 @@ func (o *ObjectHandle) Restore(ctx context.Context, opts *RestoreOptions) (*Obje
 // stop writing without saving the data, cancel the context.
 func (o *ObjectHandle) NewWriter(ctx context.Context) *Writer {
 	traceOpts := getCommonTraceOptions()
-	ctx, _ = startSpan(ctx, "cloud.google.com/go/storage.Object.Writer", traceOpts...)
+	ctx = startSpan(ctx, "cloud.google.com/go/storage.Object.Writer", traceOpts...)
 	return &Writer{
 		ctx:         ctx,
 		o:           o,
