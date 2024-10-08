@@ -57,11 +57,15 @@ func endSpan(ctx context.Context, err error) {
 func getCommonTraceOptions() []trace.SpanStartOption {
 	opts := []trace.SpanStartOption{
 		trace.WithAttributes(
-			attribute.String("gcp.client.service", "google.storage.v2.Storage"),
+			attribute.String("gcp.client.service", "storage"),
 			attribute.String("gcp.client.repo", "googleapis/google-cloud-go/storage"),
 			attribute.String("gcp.client.artifact", "com.google.cloud.google-cloud-storage"),
-			attribute.String("foo", "bar"),
-			attribute.Int64("inject-some-id", 888),
+			attribute.String("gcp.client.version", "v1.43.0"),
+			attribute.String("rpc.system", "http"),
+			attribute.String("http.response.header.x-guploader-uploadid", "ABPtcPpZ-k5xEaHeRNg-A68m69EFiU820DZRhOZQuYfzBpexLTAc31XCACj7c6HT3wuIhkPLlf6kIWvtZQ"),
+			attribute.String("http.request.header.traceparent", "00-8206ec4bbcc158083d77699b56d235fb-0a5aee4e01cab948-01"),
+			attribute.String("net.Transport", "tcp/ip"),
+			// attribute.Int64("http.response.header.x-guploader-uploadid", 888),
 		),
 	}
 	return opts
