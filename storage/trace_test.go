@@ -27,6 +27,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -125,10 +126,34 @@ func TestTraceSpansMultiEmulated(t *testing.T) {
 				},
 			},
 			{
+				name:      "Bucket.Objects",
+				resources: []string{"bucket", "object"},
+				call: func(ctx context.Context, c *Client, fs *resources) error {
+					it := c.Bucket(fs.bucket.Name).Objects(ctx, nil)
+					for {
+						_, err := it.Next()
+						if err == iterator.Done {
+							return nil
+						}
+						if err != nil {
+							return err
+						}
+					}
+				},
+			},
+			{
 				name:      "Object.Attrs",
 				resources: []string{"bucket", "object"},
 				call: func(ctx context.Context, c *Client, fs *resources) error {
 					_, err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).Attrs(ctx)
+					return err
+				},
+			},
+			{
+				name:      "Object.Delete",
+				resources: []string{"bucket", "object"},
+				call: func(ctx context.Context, c *Client, fs *resources) error {
+					err := c.Bucket(fs.bucket.Name).Object(fs.object.Name).Delete(ctx)
 					return err
 				},
 			},

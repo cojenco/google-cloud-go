@@ -2218,6 +2218,11 @@ func toHierarchicalNamespaceFromRaw(r *raw.BucketHierarchicalNamespace) *Hierarc
 //
 // Note: The returned iterator is not safe for concurrent operations without explicit synchronization.
 func (b *BucketHandle) Objects(ctx context.Context, q *Query) *ObjectIterator {
+	ctx, span := startSpan(ctx, "Bucket.Objects")
+	if span != nil {
+		defer span.End()
+	}
+	// defer func() { endSpan(ctx, err) }()
 	o := makeStorageOpts(true, b.retry, b.userProject)
 	return b.c.tc.ListObjects(ctx, b.name, q, o...)
 }

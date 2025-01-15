@@ -1083,7 +1083,10 @@ type ObjectAttrsToUpdate struct {
 }
 
 // Delete deletes the single specified object.
-func (o *ObjectHandle) Delete(ctx context.Context) error {
+func (o *ObjectHandle) Delete(ctx context.Context) (err error) {
+	ctx, _ = startSpan(ctx, "Object.Delete")
+	defer func() { endSpan(ctx, err) }()
+
 	if err := o.validate(); err != nil {
 		return err
 	}
