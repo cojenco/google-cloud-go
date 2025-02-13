@@ -81,7 +81,7 @@ func (c *Client) Bucket(name string) *BucketHandle {
 // Create creates the Bucket in the project.
 // If attrs is nil the API defaults will be used.
 func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *BucketAttrs) (err error) {
-	ctx, _ = startSpan(ctx, "Bucket.Create")
+	ctx, _ = startSpan(ctx, "Bucket.Create", makeBucketTraceOptions(b)...)
 	defer func() { endSpan(ctx, err) }()
 
 	o := makeStorageOpts(true, b.retry, b.userProject)
@@ -94,7 +94,7 @@ func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *Buck
 
 // Delete deletes the Bucket.
 func (b *BucketHandle) Delete(ctx context.Context) (err error) {
-	ctx, _ = startSpan(ctx, "Bucket.Delete")
+	ctx, _ = startSpan(ctx, "Bucket.Delete", makeBucketTraceOptions(b)...)
 	defer func() { endSpan(ctx, err) }()
 
 	o := makeStorageOpts(true, b.retry, b.userProject)
@@ -149,7 +149,7 @@ func (b *BucketHandle) Object(name string) *ObjectHandle {
 
 // Attrs returns the metadata for the bucket.
 func (b *BucketHandle) Attrs(ctx context.Context) (attrs *BucketAttrs, err error) {
-	ctx, _ = startSpan(ctx, "Bucket.Attrs")
+	ctx, _ = startSpan(ctx, "Bucket.Attrs", makeBucketTraceOptions(b)...)
 	defer func() { endSpan(ctx, err) }()
 
 	o := makeStorageOpts(true, b.retry, b.userProject)
@@ -158,7 +158,7 @@ func (b *BucketHandle) Attrs(ctx context.Context) (attrs *BucketAttrs, err error
 
 // Update updates a bucket's attributes.
 func (b *BucketHandle) Update(ctx context.Context, uattrs BucketAttrsToUpdate) (attrs *BucketAttrs, err error) {
-	ctx, _ = startSpan(ctx, "Bucket.Update")
+	ctx, _ = startSpan(ctx, "Bucket.Update", makeBucketTraceOptions(b)...)
 	defer func() { endSpan(ctx, err) }()
 
 	isIdempotent := b.conds != nil && b.conds.MetagenerationMatch != 0

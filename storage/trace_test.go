@@ -132,6 +132,93 @@ func TestStorageTraceEndSpanRecordError(t *testing.T) {
 	}
 }
 
+func TestMakeBucketTraceOptions(t *testing.T) {
+	ctx := context.Background()
+	te := testutil.NewOpenTelemetryTestExporter()
+	t.Cleanup(func() {
+		te.Unregister(ctx)
+	})
+
+	// TODO: Remove setting development env var upon launch.
+	t.Setenv("GO_STORAGE_DEV_OTEL_TRACING", "true")
+
+	spanName := "storage.TestTrace.TestmakeBucketTraceOptions"
+	b := &BucketHandle{
+		name: "my-bucket",
+		c: &Client{
+			tc: &httpStorageClient{},
+		},
+	}
+	ctx, _ = startSpan(ctx, spanName, makeBucketTraceOptions(b)...)
+	endSpan(ctx, nil)
+
+	spans := te.Spans()
+	gotSpan := spans[0]
+	if len(spans) != 1 {
+		t.Errorf("expected one span, got %d", len(spans))
+	}
+	if got, want := gotSpan.Name, appendPackageName(spanName); got != want {
+		t.Fatalf("got %s, want %s", got, want)
+	}
+
+	wantSpan := createWantSpanStub(spanName, getCommonAttributes())
+	wantBucketAttrs := []attribute.KeyValue{
+		attribute.String("gsutil.uri", formatGsutilUri(b.name, "")),
+		attribute.String("gcp.client.service", getTransportService(b.c.tc)),
+	}
+	wantSpan.Attributes = append(wantSpan.Attributes, wantBucketAttrs...)
+	opts := []cmp.Option{
+		cmp.Comparer(spanAttributesComparer),
+	}
+	if diff := testutil.Diff(gotSpan, wantSpan, opts...); diff != "" {
+		t.Errorf("diff: -got, +want:\n%s\n", diff)
+	}
+}
+
+func TestMakeObjectTraceOptions(t *testing.T) {
+	ctx := context.Background()
+	te := testutil.NewOpenTelemetryTestExporter()
+	t.Cleanup(func() {
+		te.Unregister(ctx)
+	})
+
+	// TODO: Remove setting development env var upon launch.
+	t.Setenv("GO_STORAGE_DEV_OTEL_TRACING", "true")
+
+	spanName := "storage.TestTrace.TestmakeObjectTraceOptions"
+	o := &ObjectHandle{
+		bucket: "my-bucket",
+		object: "my-object",
+		c: &Client{
+			tc: &httpStorageClient{},
+		},
+	}
+	ctx, _ = startSpan(ctx, spanName, makeObjectTraceOptions(o)...)
+	endSpan(ctx, nil)
+
+	spans := te.Spans()
+	gotSpan := spans[0]
+	if len(spans) != 1 {
+		t.Errorf("expected one span, got %d", len(spans))
+	}
+	if got, want := gotSpan.Name, appendPackageName(spanName); got != want {
+		t.Fatalf("got %s, want %s", got, want)
+	}
+
+	wantSpan := createWantSpanStub(spanName, getCommonAttributes())
+	wantObjAttrs := []attribute.KeyValue{
+		attribute.String("gsutil.uri", formatGsutilUri(o.bucket, o.object)),
+		attribute.String("gcp.client.service", getTransportService(o.c.tc)),
+	}
+	wantSpan.Attributes = append(wantSpan.Attributes, wantObjAttrs...)
+	opts := []cmp.Option{
+		cmp.Comparer(spanAttributesComparer),
+	}
+	if diff := testutil.Diff(gotSpan, wantSpan, opts...); diff != "" {
+		t.Errorf("diff: -got, +want:\n%s\n", diff)
+	}
+}
+
 func createWantSpanStub(spanName string, attrs []attribute.KeyValue) tracetest.SpanStub {
 	return tracetest.SpanStub{
 		Name:       appendPackageName(spanName),

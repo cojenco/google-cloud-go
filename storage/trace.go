@@ -97,6 +97,29 @@ func appendPackageName(spanName string) string {
 	return fmt.Sprintf("%s.%s", gcpClientArtifact, spanName)
 }
 
+func formatGsutilUri(bucket, object string) string {
+	if object == "" {
+		return fmt.Sprintf("gs://%s/", bucket)
+	}
+	return fmt.Sprintf("gs://%s/%s", bucket, object)
+}
+
+func makeBucketTraceOptions(b *BucketHandle, attrs ...attribute.KeyValue) []trace.SpanStartOption {
+	return []trace.SpanStartOption{
+		trace.WithAttributes(attribute.String("gsutil.uri", formatGsutilUri(b.name, ""))),
+		trace.WithAttributes(attribute.String("gcp.client.service", getTransportService(b.c.tc))),
+		trace.WithAttributes(attrs...),
+	}
+}
+
+func makeObjectTraceOptions(o *ObjectHandle, attrs ...attribute.KeyValue) []trace.SpanStartOption {
+	return []trace.SpanStartOption{
+		trace.WithAttributes(attribute.String("gsutil.uri", formatGsutilUri(o.bucket, o.object))),
+		trace.WithAttributes(attribute.String("gcp.client.service", getTransportService(o.c.tc))),
+		trace.WithAttributes(attrs...),
+	}
+}
+
 // makeSpanStartOptAttrs makes a SpanStartOption and converts a generic map to OpenTelemetry attributes.
 func makeSpanStartOptAttrs(attrMap map[string]interface{}) []trace.SpanStartOption {
 	attrs := otAttrs(attrMap)
@@ -125,4 +148,15 @@ func otAttrs(attrMap map[string]interface{}) []attribute.KeyValue {
 		attrs = append(attrs, a)
 	}
 	return attrs
+}
+
+func getTransportService(client interface{}) string {
+	switch client.(type) {
+	case *httpStorageClient:
+		return "storage"
+	case *grpcStorageClient:
+		return "google.storage.v2.Storage"
+	default:
+		return "storage"
+	}
 }

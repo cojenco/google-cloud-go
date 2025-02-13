@@ -1023,7 +1023,7 @@ func (o *ObjectHandle) Key(encryptionKey []byte) *ObjectHandle {
 // Attrs returns meta information about the object.
 // ErrObjectNotExist will be returned if the object is not found.
 func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *ObjectAttrs, err error) {
-	ctx, _ = startSpan(ctx, "Object.Attrs")
+	ctx, _ = startSpan(ctx, "Object.Attrs", makeObjectTraceOptions(o)...)
 	defer func() { endSpan(ctx, err) }()
 
 	if err := o.validate(); err != nil {
@@ -1037,7 +1037,7 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *ObjectAttrs, err error
 // ObjectAttrsToUpdate docs for details on treatment of zero values.
 // ErrObjectNotExist will be returned if the object is not found.
 func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (oa *ObjectAttrs, err error) {
-	ctx, _ = startSpan(ctx, "Object.Update")
+	ctx, _ = startSpan(ctx, "Object.Update", makeObjectTraceOptions(o)...)
 	defer func() { endSpan(ctx, err) }()
 
 	if err := o.validate(); err != nil {
@@ -1108,7 +1108,7 @@ type ObjectAttrsToUpdate struct {
 
 // Delete deletes the single specified object.
 func (o *ObjectHandle) Delete(ctx context.Context) (err error) {
-	ctx, _ = startSpan(ctx, "Object.Delete")
+	ctx, _ = startSpan(ctx, "Object.Delete", makeObjectTraceOptions(o)...)
 	defer func() { endSpan(ctx, err) }()
 	if err := o.validate(); err != nil {
 		return err
