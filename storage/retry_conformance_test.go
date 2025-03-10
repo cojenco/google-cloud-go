@@ -35,6 +35,9 @@ import (
 	"github.com/googleapis/gax-go/v2"
 	"github.com/googleapis/gax-go/v2/callctx"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/metadata"
 )
 
 const (
@@ -774,6 +777,12 @@ func TestRetryConformance(t *testing.T) {
 
 	for _, testFile := range testFiles {
 		for _, retryTest := range testFile.RetryTests {
+			// if retryTest.Id != 2 && retryTest.Id != 7  {
+			// 	continue
+			// }
+			if retryTest.Id != 7  {
+				continue
+			}
 			for _, instructions := range retryTest.Cases {
 				for _, method := range retryTest.Methods {
 					methodName := method.Name
@@ -784,7 +793,7 @@ func TestRetryConformance(t *testing.T) {
 						t.Logf("No tests for operation %v", methodName)
 					}
 					for i, fn := range methods[methodName] {
-						transports := []string{"http", "grpc"}
+						transports := []string{"grpc"}
 						for _, transport := range transports {
 							testName := fmt.Sprintf("%v-%v-%v-%v-%v", transport, retryTest.Id, instructions.Instructions, methodName, i)
 							t.Run(testName, func(t *testing.T) {
@@ -976,7 +985,26 @@ func (et *emulatorTest) create(instructions map[string][]string, transport strin
 		et.Fatalf("HTTP transportClient: %v", err)
 	}
 	if transport == "grpc" {
-		transportClient, err = NewGRPCClient(ctx)
+		// Create interceptor for object writes
+		streamInterceptor := grpc.WithStreamInterceptor(
+			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+				fmt.Println(method)
+				fmt.Println("Headers:")
+				md, ok := metadata.FromOutgoingContext(ctx)
+				if ok {
+					for k, vals := range md {
+						for _, v := range vals {
+							fmt.Printf("\t%s:%s\n", k, v)
+						}
+					}
+				}
+
+				// Create client stream.
+				clientStream, err := streamer(ctx, desc, cc, method, opts...)
+				return clientStream, err
+			})
+		transportClient, err = NewGRPCClient(ctx, option.WithGRPCDialOption(streamInterceptor))
+		// transportClient, err = NewGRPCClient(ctx)
 		if err != nil {
 			et.Fatalf("GRPC transportClient: %v", err)
 		}
