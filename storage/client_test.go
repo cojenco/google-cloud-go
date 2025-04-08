@@ -1114,6 +1114,23 @@ func TestOpenAppendableWriterLeaveUnfinalizedEmulated(t *testing.T) {
 		if !o.Finalized.IsZero() {
 			t.Errorf("unexpected valid finalize time: got %v; want zero", o.Finalized)
 		}
+		if o.Size != wantLen {
+			t.Errorf("incorrect object size: got %d; want %d", o.Size, wantLen)
+		}
+		// Download object and check data
+		r, err := veneerClient.Bucket(bucket).Object(objName).NewReader(ctx)
+		if err != nil {
+			t.Fatalf("opening reading: %v", err)
+		}
+		defer r.Close()
+
+		got, err := io.ReadAll(r)
+		if n := int64(len(got)); n != wantLen {
+			t.Fatalf("expected to read %d bytes, but got %d (%v)", wantLen, n, err)
+		}
+		if diff := cmp.Diff(got, randomBytesToWrite); diff != "" {
+			t.Fatalf("content mismatch, got %v bytes, want %v bytes", len(got), len(randomBytesToWrite))
+		}
 	})
 }
 
